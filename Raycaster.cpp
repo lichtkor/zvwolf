@@ -110,6 +110,39 @@ int main(int argc, char* argv[]) {
                 stepY = 1;
                 sideDistY = (mapY + 1.0 - posY) * deltaDistY;
             }
+
+            //perform DDA
+            while (hit == 0)
+            {
+                //jump to next map square either in x dir or in y dir
+                if (sideDistX < sideDistY)
+                {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                }
+                else
+                {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                //check if ray has hit a wall
+                if (worldMap[mapX][mapY] > 0) hit = 1;
+            }
+            
+            //calculate distance projected on camera direction (euclidean distance would give fish eye effect)
+            if(side == 0) perpWallDist = (sideDistX - deltaDistX);
+            else          perpWallDist = (sideDistY - deltaDistY);
+
+            //calculate height of line to draw on screen
+            int lineHeight = (int)(h / perpWallDist);
+
+            //calculate lowest and highest pixel to fill in current stripe
+            int drawStart = -lineHeight / 2 + h / 2;
+            if(drawStart < 0)drawStart = 0;
+            int drawEnd = lineHeight / 2 + h / 2;
+            if(drawEnd >= h)drawEnd = h - 1;
         }
     }
 
