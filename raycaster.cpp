@@ -20,30 +20,30 @@ using namespace QuickCG;
 
 int worldMap[mapWidth][mapHeight]=
 {
-  {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,7,7,7,7,7,7,7,7},
-  {4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
-  {4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-  {4,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7},
-  {4,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7},
-  {4,0,4,0,0,0,0,5,5,5,5,5,5,5,5,5,7,7,0,7,7,7,7,7},
-  {4,0,5,0,0,0,0,5,0,5,0,5,0,5,0,5,7,0,0,0,7,7,7,1},
-  {4,0,6,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8},
-  {4,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,1},
-  {4,0,8,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8},
-  {4,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,7,7,7,1},
-  {4,0,0,0,0,0,0,5,5,5,5,0,5,5,5,5,7,7,7,7,7,7,7,1},
-  {6,6,6,6,6,6,6,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
-  {8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4},
-  {6,6,6,6,6,6,0,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6},
-  {4,4,4,4,4,4,0,4,4,4,6,0,6,2,2,2,2,2,2,2,3,3,3,3},
-  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
-  {4,0,0,0,0,0,0,0,0,0,0,0,6,2,0,0,5,0,0,2,0,0,0,2},
-  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
-  {4,0,6,0,6,0,0,0,0,4,6,0,0,0,0,0,5,0,0,0,0,0,0,2},
-  {4,0,0,5,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2},
-  {4,0,6,0,6,0,0,0,0,4,6,0,6,2,0,0,5,0,0,2,0,0,0,2},
-  {4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2},
-  {4,4,4,4,4,4,4,4,4,4,1,1,1,2,2,2,2,2,2,3,3,3,3,3}
+  {8,8,8,8,8,8,8,8,8,8,8,4,4,6,4,4,6,4,6,4,4,4,6,4},
+  {8,0,0,0,0,0,0,0,0,0,8,4,0,0,0,0,0,0,0,0,0,0,0,4},
+  {8,0,3,3,0,0,0,0,0,8,8,4,0,0,0,0,0,0,0,0,0,0,0,6},
+  {8,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6},
+  {8,0,3,3,0,0,0,0,0,8,8,4,0,0,0,0,0,0,0,0,0,0,0,4},
+  {8,0,0,0,0,0,0,0,0,0,8,4,0,0,0,0,0,6,6,6,0,6,4,6},
+  {8,8,8,8,0,8,8,8,8,8,8,4,4,4,4,4,4,6,0,0,0,0,0,6},
+  {7,7,7,7,0,7,7,7,7,0,8,0,8,0,8,0,8,4,0,4,0,6,0,6},
+  {7,7,0,0,0,0,0,0,7,8,0,8,0,8,0,8,8,6,0,0,0,0,0,6},
+  {7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,6,0,0,0,0,0,4},
+  {7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,6,0,6,0,6,0,6},
+  {7,7,0,0,0,0,0,0,7,8,0,8,0,8,0,8,8,6,4,6,0,6,6,6},
+  {7,7,7,7,0,7,7,7,7,8,8,4,0,6,8,4,8,3,3,3,0,3,3,3},
+  {2,2,2,2,0,2,2,2,2,4,6,4,0,0,6,0,6,3,0,0,0,0,0,3},
+  {2,2,0,0,0,0,0,2,2,4,0,0,0,0,0,0,4,3,0,0,0,0,0,3},
+  {2,0,0,0,0,0,0,0,2,4,0,0,0,0,0,0,4,3,0,0,0,0,0,3},
+  {1,0,0,0,0,0,0,0,1,4,4,4,4,4,6,0,6,3,3,0,0,0,3,3},
+  {2,0,0,0,0,0,0,0,2,2,2,1,2,2,2,6,6,0,0,5,0,5,0,5},
+  {2,2,0,0,0,0,0,2,2,2,0,0,0,2,2,0,5,0,5,0,0,0,5,5},
+  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,2,5,0,5,0,5,0,5,0,5},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5},
+  {2,0,0,0,0,0,0,0,2,0,0,0,0,0,2,5,0,5,0,5,0,5,0,5},
+  {2,2,0,0,0,0,0,2,2,2,0,0,0,2,2,0,5,0,5,0,0,0,5,5},
+  {2,2,2,2,1,2,2,2,2,2,2,1,2,2,2,5,5,5,5,5,5,5,5,5}
 };
 
 Uint32 buffer[screenHeight][screenWidth]; // y coord first because it works per scanline
@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
 
     screen(screenWidth, screenHeight, 0, "Raycaster");
 
+#if 0
     //generate some textures
     for(int x = 0; x < texWidth; x++)
     for(int y = 0; y < texHeight; y++)
@@ -78,6 +79,18 @@ int main(int argc, char* argv[]) {
         texture[6][texWidth * y + x] = 65536 * ycolor; //red gradient
         texture[7][texWidth * y + x] = 128 + 256 * 128 + 65536 * 128; //flat grey texture
     }
+#else
+  //load some textures
+  unsigned long tw, th;
+  loadImage(texture[0], tw, th, "assets/eagle.png");
+  loadImage(texture[1], tw, th, "assets/redbrick.png");
+  loadImage(texture[2], tw, th, "assets/purplestone.png");
+  loadImage(texture[3], tw, th, "assets/greystone.png");
+  loadImage(texture[4], tw, th, "assets/bluestone.png");
+  loadImage(texture[5], tw, th, "assets/mossy.png");
+  loadImage(texture[6], tw, th, "assets/wood.png");
+  loadImage(texture[7], tw, th, "assets/colorstone.png");
+#endif
 
     while (!done())
     {
@@ -157,10 +170,12 @@ int main(int argc, char* argv[]) {
             //calculate height of line to draw on screen
             int lineHeight = (int)(h / perpWallDist);
 
+            int pitch = 100;
+
             //calculate lowest and highest pixel to fill in current stripe
-            int drawStart = -lineHeight / 2 + h / 2;
+            int drawStart = -lineHeight / 2 + h / 2 + pitch;
             if(drawStart < 0)drawStart = 0;
-            int drawEnd = lineHeight / 2 + h / 2;
+            int drawEnd = lineHeight / 2 + h / 2 + pitch;
             if(drawEnd >= h)drawEnd = h - 1;
 
             //texturing calculations
@@ -180,14 +195,14 @@ int main(int argc, char* argv[]) {
             // How much to increase the texture coordinate per screen pixel
             double step = 1.0 * texHeight / lineHeight;
             // Starting texture coordinate
-            double texPos = (drawStart - h / 2 + lineHeight / 2) * step;
+            double texPos = (drawStart - pitch- h / 2 + lineHeight / 2) * step;
             for(int y = drawStart; y < drawEnd; y++)
             {
                 // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
                 int texY = (int)texPos & (texHeight - 1);
                 texPos += step;
                 Uint32 color = texture[texNum][texHeight * texY + texX];
-                //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+                //make color darker for y sides R, G and B byte each divided through two with a "shift" and an "and"
                 if(side == 1) color = (color >> 1) & 8355711;
                 buffer[y][x] = color;
             }
