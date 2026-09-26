@@ -1,16 +1,19 @@
-#define SDL_MAIN_HANDLED
+#include <GLFW/glfw3.h>
 #include <cmath>
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "quickcg.h"
-using namespace QuickCG;
+#include "supergl.h"
+using namespace SuperGL;
 
 /*
-clang++ *.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv4.exe
-g++ quickcg.cpp raycaster.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv4.exe
+clang++ *.cpp -O2 -lopengl32 -lglfw3 -o raycasterv5.exe
+clang++ *.cpp glad.c -O2 -lopengl32 -lglfw3 -lz -o raycasterv5.exe
+g++ quickcg.cpp raycaster.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv5.exe
 */
+
+/// TODOSS. IMPLEMENT 1280x720, OPTIMIZATION, LOCK THE MOUSE INSTEAD OF TURNING THE CAMERA WITH A/D KEYS
 
 #define FLOOR_HORIZONTAL 1
 
@@ -384,19 +387,19 @@ int main(int argc, char *argv[])
     double rotSpeed = frameTime * 2.0; //the constant value is in radians/second
     readKeys();
     //move forward if no wall in front of you
-    if (keyDown(SDLK_w))
+    if (keyDown(GLFW_KEY_W))
     {
       if(worldMap[int(posX + dirX * moveSpeed)][int(posY)] == false) posX += dirX * moveSpeed;
       if(worldMap[int(posX)][int(posY + dirY * moveSpeed)] == false) posY += dirY * moveSpeed;
     }
     //move backwards if no wall behind you
-    if(keyDown(SDLK_s))
+    if(keyDown(GLFW_KEY_S))
     {
       if(worldMap[int(posX - dirX * moveSpeed)][int(posY)] == false) posX -= dirX * moveSpeed;
       if(worldMap[int(posX)][int(posY - dirY * moveSpeed)] == false) posY -= dirY * moveSpeed;
     }
     //rotate to the right
-    if(keyDown(SDLK_d))
+    if(keyDown(GLFW_KEY_D))
     {
       //both camera direction and camera plane must be rotated
       double oldDirX = dirX;
@@ -407,7 +410,7 @@ int main(int argc, char *argv[])
       planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
     }
     //rotate to the left
-    if(keyDown(SDLK_a))
+    if(keyDown(GLFW_KEY_A))
     {
       //both camera direction and camera plane must be rotated
       double oldDirX = dirX;
