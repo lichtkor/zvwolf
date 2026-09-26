@@ -62,7 +62,55 @@ int main(int argc, char* argv[]) {
 
     while (!done())
     {
-        
+        for (int x = 0; x < w; x++)
+        {
+            //calculate ray position and direction
+            double cameraX = 2 * x / double(w) - 1;//x coord in the camera space
+            double rayDirX = dirX + planeX * cameraX;
+            double rayDirY = dirY + planeY * cameraX;
+
+            //which box of the map we're in
+            int mapX = int(posX);
+            int mapY = int(posY);
+
+            //length of the ray from current position to next x or y side
+            double sideDistX;
+            double sideDistY;
+
+            // length of the ray from one x or y side to next x or y side
+            double deltaDistX = (rayDirX == 0) ? 1e30 : std::abs(1 / rayDirX);
+            double deltaDistY = (rayDirY == 0) ? 1e30 : std::abs(1 / rayDirY);
+            double perpWallDist;
+
+            //what direction to step in x or y direction (either +1 or -1)
+            int stepX;
+            int stepY;
+
+            int hit = 0; //was there a wall hit?
+            int side; //was a NS or a EW wall hit?
+
+            //calculate step and initial sideDist
+            if (rayDirX < 0)
+            {
+                stepX = -1;
+                sideDistX = (posX - mapX) * deltaDistX;
+            }
+            else
+            {
+                stepX = 1;
+                sideDistX = (mapX + 1.0 - posX) * deltaDistX;
+            }
+            if (rayDirY < 0)
+            {
+                stepY = -1;
+                sideDistY = (posY - mapY) * deltaDistY;
+            }
+            else
+            {
+                stepY = 1;
+                sideDistY = (mapY + 1.0 - posY) * deltaDistY;
+            }
+        }
     }
 
     return 0;
