@@ -9,6 +9,8 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
+#include <cstring>
+#include <iterator>
 #include <zlib.h>
 
 namespace SuperGL
@@ -25,6 +27,14 @@ std::map<int, bool> keypressed;
 std::vector<Uint32> screenBuffer; 
 
 GLFWwindow* window = nullptr;
+int windowWidth = 0;
+int windowHeight = 0;
+int windowedPosX = 0;
+int windowedPosY = 0;
+bool mouseLocked = false;
+bool isFullscreen = false;
+double lastMouseX = 0.0;
+double lastMouseY = 0.0;
 GLuint screenTexture;
 GLuint quadVAO, quadVBO, quadEBO;
 GLuint shaderProgram;
@@ -95,14 +105,68 @@ void readKeys()
     glfwPollEvents();
 }
 
+void setMouseLocked(bool locked)
+{
+    if(!window) return;
+    mouseLocked = locked;
+    if(locked)
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        if(glfwRawMouseMotionSupported())
+            glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+        glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
+    }
+    else
+    {
+        if(glfwRawMouseMotionSupported())
+            glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+}
+
+void getMouseDelta(double& dx, double& dy)
+{
+    dx = 0.0;
+    dy = 0.0;
+    if(!window || !mouseLocked) return;
+
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+    dx = x - lastMouseX;
+    dy = y - lastMouseY;
+    lastMouseX = x;
+    lastMouseY = y;
+}
+
+void getMouseState(int& mouseX, int& mouseY)
+{
+    mouseX = mouseY = 0;
+    if(!window) return;
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+    mouseX = static_cast<int>(x);
+    mouseY = static_cast<int>(y);
+}
+
+void getMouseState(int& mouseX, int& mouseY, bool& LMB, bool& RMB)
+{
+    getMouseState(mouseX, mouseY);
+    LMB = window && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    RMB = window && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // BASIC SCREEN FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-void screen(int width, int height, bool fullscreen, const std::string& text)
+void screen(int width, int height, bool fullscreen, const std::string& text,
+            int renderWidth, int renderHeight)
 {
-    w = width;
-    h = height;
+    windowWidth = width;
+    windowHeight = height;
+    isFullscreen = fullscreen;
+    w = (renderWidth > 0) ? renderWidth : width;
+    h = (renderHeight > 0) ? renderHeight : height;
 
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -123,11 +187,18 @@ void screen(int width, int height, bool fullscreen, const std::string& text)
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(0); // The raycaster can cap FPS itself; avoid driver/vsync stalls.
 
+    // GLAD must be initialized BEFORE any OpenGL function is called.
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
+        glfwDestroyWindow(window);
+        window = nullptr;
+        glfwTerminate();
         std::exit(1);
     }
+
+    glViewport(0, 0, windowWidth, windowHeight);
 
     screenBuffer.resize(w * h, packColor(RGB_Black));
 
@@ -136,14 +207,42 @@ void screen(int width, int height, bool fullscreen, const std::string& text)
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
+    GLint vertexOK = GL_FALSE;
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &vertexOK);
+    if(vertexOK != GL_TRUE)
+    {
+        char log[2048] = {};
+        glGetShaderInfoLog(vertexShader, sizeof(log), nullptr, log);
+        std::cerr << "Vertex shader compilation failed:\n" << log << std::endl;
+    }
+
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
+
+    GLint fragmentOK = GL_FALSE;
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &fragmentOK);
+    if(fragmentOK != GL_TRUE)
+    {
+        char log[2048] = {};
+        glGetShaderInfoLog(fragmentShader, sizeof(log), nullptr, log);
+        std::cerr << "Fragment shader compilation failed:\n" << log << std::endl;
+    }
 
     shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
+
+    GLint linkOK = GL_FALSE;
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkOK);
+    if(linkOK != GL_TRUE)
+    {
+        char log[2048] = {};
+        glGetProgramInfoLog(shaderProgram, sizeof(log), nullptr, log);
+        std::cerr << "Shader program link failed:\n" << log << std::endl;
+    }
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -178,9 +277,50 @@ void screen(int width, int height, bool fullscreen, const std::string& text)
     // Texture setup
     glGenTextures(1, &screenTexture);
     glBindTexture(GL_TEXTURE_2D, screenTexture);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer.data());
+}
+
+void toggleFullscreen(bool fullscreen, int windowedWidth, int windowedHeight)
+{
+    if(!window || fullscreen == isFullscreen) return;
+
+    if(fullscreen)
+    {
+        glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
+
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        if(!monitor) return;
+
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        if(!mode) return;
+
+        glfwSetWindowMonitor(window, monitor,
+                             0, 0,
+                             mode->width, mode->height,
+                             mode->refreshRate);
+
+        windowWidth = mode->width;
+        windowHeight = mode->height;
+        isFullscreen = true;
+    }
+    else
+    {
+        glfwSetWindowMonitor(window, nullptr,
+                             windowedPosX, windowedPosY,
+                             windowedWidth, windowedHeight,
+                             GLFW_DONT_CARE);
+
+        windowWidth = windowedWidth;
+        windowHeight = windowedHeight;
+        isFullscreen = false;
+    }
+
+    // The CPU renderer keeps its internal resolution; only the presentation
+    // viewport changes when the window changes size.
+    glViewport(0, 0, windowWidth, windowHeight);
 }
 
 void redraw()
@@ -217,9 +357,8 @@ ColorRGB pget(int x, int y)
 
 void drawBuffer(Uint32* buffer)
 {
-    for(int i = 0; i < w * h; i++) {
-        screenBuffer[i] = buffer[i];
-    }
+    if(!buffer) return;
+    std::memcpy(screenBuffer.data(), buffer, screenBuffer.size() * sizeof(Uint32));
 }
 
 void getScreenBuffer(std::vector<Uint32>& buffer)
@@ -248,6 +387,21 @@ void sleep()
 void sleep(double seconds)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(seconds * 1000)));
+}
+
+void waitFrame(double oldTime, double frameDuration)
+{
+    const double target = oldTime + frameDuration;
+    while(true)
+    {
+        double now = glfwGetTime();
+        double remaining = target - now;
+        if(remaining <= 0.0) break;
+        if(remaining > 0.002)
+            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>((remaining - 0.001) * 1000.0)));
+        else
+            std::this_thread::yield();
+    }
 }
 
 bool done(bool quit_if_esc, bool delay)
@@ -335,7 +489,7 @@ static bool decodePNG_RGBA32(
 
         const unsigned char* data = &png[pos];
 
-        if(memcmp(type, "IHDR", 4) == 0)
+        if(std::memcmp(type, "IHDR", 4) == 0)
         {
             if(chunkLength != 13) return false;
 
@@ -369,11 +523,11 @@ static bool decodePNG_RGBA32(
 
             gotIHDR = true;
         }
-        else if(memcmp(type, "IDAT", 4) == 0)
+        else if(std::memcmp(type, "IDAT", 4) == 0)
         {
             compressed.insert(compressed.end(), data, data + chunkLength);
         }
-        else if(memcmp(type, "IEND", 4) == 0)
+        else if(std::memcmp(type, "IEND", 4) == 0)
         {
             gotIEND = true;
             break;

@@ -122,7 +122,9 @@ extern int h;
 bool keyDown(int key);
 bool keyPressed(int key);
 
-void screen(int width = 640, int height = 400, bool fullscreen = false, const std::string& text = " ");
+void screen(int width = 640, int height = 400, bool fullscreen = false, const std::string& text = " ",
+            int renderWidth = 0, int renderHeight = 0);
+void toggleFullscreen(bool fullscreen, int windowedWidth, int windowedHeight);
 void lock();
 void unlock();
 void redraw();
@@ -138,6 +140,8 @@ void waitFrame(double oldTime, double frameDuration);
 bool done(bool quit_if_esc = true, bool delay = true);
 void end();
 void readKeys();
+void setMouseLocked(bool locked);
+void getMouseDelta(double& dx, double& dy);
 void getMouseState(int& mouseX, int& mouseY);
 void getMouseState(int& mouseX, int& mouseY, bool& LMB, bool& RMB);
 unsigned long getTicks();

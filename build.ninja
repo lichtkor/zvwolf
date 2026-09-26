@@ -1,0 +1,41 @@
+# zvwolf Release Build
+
+cxxflags = -std=c++17 -O3 -DNDEBUG
+cflags = -O3 -DNDEBUG
+ldflags = -lopengl32 -lglfw3 -lz
+
+
+rule cxx
+  command = clang++ $cxxflags -MMD -MF $out.d -c $in -o $out
+  depfile = $out.d
+  deps = gcc
+
+
+rule cc
+  command = clang $cflags -MMD -MF $out.d -c $in -o $out
+  depfile = $out.d
+  deps = gcc
+
+
+rule link
+  command = clang++ $in -o $out $ldflags
+
+
+rule copy_assets
+  command = cmd /C "if not exist bin\assets mkdir bin\assets && xcopy /E /I /Y assets bin\assets > nul"
+
+
+build build/zvwolf.o: cxx zvwolf.cpp
+build build/supergl.o: cxx supergl.cpp
+build build/glad.o: cc glad.c
+
+build bin/zvwolf.exe: link $
+  build/zvwolf.o $
+  build/supergl.o $
+  build/glad.o
+
+build bin/assets: copy_assets
+
+build dist: phony bin/zvwolf.exe bin/assets
+
+default dist
