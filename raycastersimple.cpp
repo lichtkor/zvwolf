@@ -1,20 +1,18 @@
 #define SDL_MAIN_HANDLED
 #include <cmath>
 #include <string>
-#include <vector>
-#include <iostream>
 
 #include "quickcg.h"
 using namespace QuickCG;
 
 /*
  * Date 26.09.2026
- * File Raycaster.cpp
+ * File raycastersimple.cpp
 */
 
 /*
-g++ *.cpp -lmingw32 -lSDLmain -lSDL -O2
-g++ *.cpp -lSDL
+clang++ *.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv1.exe
+g++ quickcg.cpp raycastersimple.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv1.exe
 */
 
 #define mapWidth 24
@@ -173,6 +171,42 @@ int main(int argc, char* argv[]) {
         //speed modifiers
         double moveSpeed = frameTime * 5.0; //the constant value is in sqaures/second
         double rotSpeed = frameTime * 3.0; //the constant value is in squares/second
+
+        readKeys();
+        //move forward if no wall in front of you
+        if(keyDown(SDLK_w))
+        {
+            if(worldMap[int(posX + dirX * moveSpeed)][int(posY)] == false) posX += dirX * moveSpeed;
+            if(worldMap[int(posX)][int(posY + dirY * moveSpeed)] == false) posY += dirY * moveSpeed;
+        }
+        //move backwards if no wall behind you
+        if (keyDown(SDLK_s))
+        {
+            if(worldMap[int(posX - dirX * moveSpeed)][int(posY)] == false) posX -= dirX * moveSpeed;
+            if(worldMap[int(posX)][int(posY - dirY * moveSpeed)] == false) posY -= dirY * moveSpeed;
+        }
+        //rotate to the right
+        if (keyDown(SDLK_d))
+        {
+            //both camera direction and camera plane must be rotated
+            double oldDirX = dirX;
+            dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed);
+            dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed);
+            double oldPlaneX = planeX;
+            planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
+            planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
+        }
+        //rotate to the left
+        if (keyDown(SDLK_a))
+        {
+            //both camera direction and camera plane must be rotated
+            double oldDirX = dirX;
+            dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed);
+            dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed);
+            double oldPlaneX = planeX;
+            planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed);
+            planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed);
+        }
     }
 
     return 0;
