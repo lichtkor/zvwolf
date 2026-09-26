@@ -143,7 +143,36 @@ int main(int argc, char* argv[]) {
             if(drawStart < 0)drawStart = 0;
             int drawEnd = lineHeight / 2 + h / 2;
             if(drawEnd >= h)drawEnd = h - 1;
+
+            //choose wall color
+            ColorRGB color;
+            switch(worldMap[mapX][mapY])
+            {
+                case 1: color = RGB_Red; break; //red
+                case 2: color = RGB_Green; break; //green
+                case 3: color = RGB_Blue; break; //blue
+                case 4: color = RGB_White; break; //white
+                default: color = RGB_Yellow; break; //yellow
+            }
+
+            //give x and y sides different brightness
+            if (side == 1) {color = color / 2;}
+
+            //draw the pixels of the stripe as a vertical line
+            verLine(x, drawStart, drawEnd, color);
         }
+
+        //timing for input and FPS counter
+        oldTime = time;
+        time = getTicks();
+        double frameTime = (time - oldTime) / 1000.0; //frametime is the time this frame has taken in seconds
+        print(1.0 / frameTime); //FPS counter
+        redraw();
+        cls();
+
+        //speed modifiers
+        double moveSpeed = frameTime * 5.0; //the constant value is in sqaures/second
+        double rotSpeed = frameTime * 3.0; //the constant value is in squares/second
     }
 
     return 0;
