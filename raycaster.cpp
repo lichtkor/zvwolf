@@ -7,14 +7,12 @@
 using namespace QuickCG;
 
 /*
- *Date 26.09.2026
- *File raycaster.cpp
- *clang++ *.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv1.exe
- *g++ quickcg.cpp raycaster.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv1.exe
+ clang++ *.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv2.exe
+ g++ quickcg.cpp raycaster.cpp -O2 -lmingw32 -lSDLmain -lSDL -o raycasterv2.exe
 */
 
-#define screenWidth 800
-#define screenHeight 600
+#define screenWidth 640
+#define screenHeight 480
 #define texWidth 64
 #define texHeight 64
 #define mapWidth 24
@@ -48,6 +46,8 @@ int worldMap[mapWidth][mapHeight]=
   {4,4,4,4,4,4,4,4,4,4,1,1,1,2,2,2,2,2,2,3,3,3,3,3}
 };
 
+Uint32 buffer[screenHeight][screenWidth]; // y coord first because it works per scanline
+
 int main(int argc, char* argv[]) {
     double posX = 22.0, posY = 11.5; //x and y starting position
     double dirX = -1.0, dirY = 0.0; //initial direction vector
@@ -56,7 +56,6 @@ int main(int argc, char* argv[]) {
     double time = 0; //time of the current frame
     double oldTime = 0; //time of the previous frame
 
-    Uint32 buffer[screenHeight][screenWidth]; // y coord first because it works per scanline
     std::vector<Uint32> texture[8];
     for (int i = 0; i < 8; i++) texture[i].resize(texWidth * texHeight);
 
@@ -164,35 +163,48 @@ int main(int argc, char* argv[]) {
             int drawEnd = lineHeight / 2 + h / 2;
             if(drawEnd >= h)drawEnd = h - 1;
 
-            //choose wall color
-            ColorRGB color;
-            switch(worldMap[mapX][mapY])
+            //texturing calculations
+            int texNum = worldMap[mapX][mapY] - 1; //1 subtracted from it so that texture 0 can be used
+
+            //calculate value of wallX
+            double wallX; //where exactly the wall was hit
+            if (side == 0) wallX = posY + perpWallDist * rayDirY;
+            else           wallX = posX + perpWallDist * rayDirX;
+            wallX -= floor((wallX));
+
+            //x coord on the texture
+            int texX = int(wallX * double(texWidth));
+            if(side == 0 && rayDirX > 0) texX = texWidth - texX - 1;
+            if(side == 1 && rayDirY < 0) texX = texWidth - texX - 1;
+
+            // How much to increase the texture coordinate per screen pixel
+            double step = 1.0 * texHeight / lineHeight;
+            // Starting texture coordinate
+            double texPos = (drawStart - h / 2 + lineHeight / 2) * step;
+            for(int y = drawStart; y < drawEnd; y++)
             {
-                case 1: color = RGB_Red; break; //red
-                case 2: color = RGB_Green; break; //green
-                case 3: color = RGB_Blue; break; //blue
-                case 4: color = RGB_White; break; //white
-                default: color = RGB_Yellow; break; //yellow
+                // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
+                int texY = (int)texPos & (texHeight - 1);
+                texPos += step;
+                Uint32 color = texture[texNum][texHeight * texY + texX];
+                //make color darker for y-sides: R, G and B byte each divided through two with a "shift" and an "and"
+                if(side == 1) color = (color >> 1) & 8355711;
+                buffer[y][x] = color;
             }
-
-            //give x and y sides different brightness
-            if (side == 1) {color = color / 2;}
-
-            //draw the pixels of the stripe as a vertical line
-            verLine(x, drawStart, drawEnd, color);
         }
 
+        drawBuffer(buffer[0]);
+        for(int y = 0; y < h; y++) for(int x = 0; x < w; x++) buffer[y][x] = 0; //clear the buffer instead of cls()
         //timing for input and FPS counter
         oldTime = time;
         time = getTicks();
-        double frameTime = (time - oldTime) / 1000.0; //frametime is the time this frame has taken in seconds
+        double frameTime = (time - oldTime) / 1000.0; //frametime is the time this frame has taken, in seconds
         print(1.0 / frameTime); //FPS counter
         redraw();
-        cls();
 
         //speed modifiers
-        double moveSpeed = frameTime * 5.0; //the constant value is in sqaures/second
-        double rotSpeed = frameTime * 3.0; //the constant value is in squares/second
+        double moveSpeed = frameTime * 5.0; //the constant value is in squares/second
+        double rotSpeed = frameTime * 3.0; //the constant value is in radians/second
 
         readKeys();
         //move forward if no wall in front of you
@@ -202,13 +214,13 @@ int main(int argc, char* argv[]) {
             if(worldMap[int(posX)][int(posY + dirY * moveSpeed)] == false) posY += dirY * moveSpeed;
         }
         //move backwards if no wall behind you
-        if (keyDown(SDLK_s))
+        if(keyDown(SDLK_s))
         {
             if(worldMap[int(posX - dirX * moveSpeed)][int(posY)] == false) posX -= dirX * moveSpeed;
             if(worldMap[int(posX)][int(posY - dirY * moveSpeed)] == false) posY -= dirY * moveSpeed;
         }
         //rotate to the right
-        if (keyDown(SDLK_d))
+        if(keyDown(SDLK_d))
         {
             //both camera direction and camera plane must be rotated
             double oldDirX = dirX;
@@ -219,7 +231,7 @@ int main(int argc, char* argv[]) {
             planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
         }
         //rotate to the left
-        if (keyDown(SDLK_a))
+        if(keyDown(SDLK_a))
         {
             //both camera direction and camera plane must be rotated
             double oldDirX = dirX;
@@ -229,7 +241,11 @@ int main(int argc, char* argv[]) {
             planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed);
             planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed);
         }
+        if(keyDown(SDLK_ESCAPE))
+        {
+            break;
+        }
     }
 
-    return 0;
+  return 0;
 }
