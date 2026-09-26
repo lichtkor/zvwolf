@@ -49,7 +49,51 @@ int worldMap[mapWidth][mapHeight] =
   {2,2,2,2,1,2,2,2,2,2,2,1,2,2,2,5,5,5,5,5,5,5,5,5}
 };
 
+struct Sprite {
+  double x, y;
+  int texture;
+};
+
+#define numSprites 19
+
+Sprite sprite[numSprites] = {
+    {20.5, 11.5, 10}, //green light in front of playerstart
+  //green lights in every room
+  {18.5,4.5, 10},
+  {10.0,4.5, 10},
+  {10.0,12.5,10},
+  {3.5, 6.5, 10},
+  {3.5, 20.5,10},
+  {3.5, 14.5,10},
+  {14.5,20.5,10},
+
+  //row of pillars in front of wall
+  {18.5, 10.5, 9},
+  {18.5, 11.5, 9},
+  {18.5, 12.5, 9},
+
+  //some barrels around the map
+  {21.5, 1.5, 8},
+  {15.5, 1.5, 8},
+  {16.0, 1.8, 8},
+  {16.2, 1.2, 8},
+  {3.5,  2.5, 8},
+  {9.5, 15.5, 8},
+  {10.0, 15.1,8},
+  {10.5, 15.8,8},
+};
+
 Uint32 buffer[screenHeight][screenWidth]; //y coordinate first because it works per scanline
+
+//1D ZBuffer
+double ZBuffer[screenWidth];
+
+//arrays used to sort the sprites
+int spriteOrder[numSprites];
+double spriteDistance[numSprites];
+
+//function used to sort the sprites
+void sortSprites(int *order, double *dist, int amount);
 
 int main(int argc, char *argv[])
 {
@@ -60,8 +104,8 @@ int main(int argc, char *argv[])
   double time = 0; //time of current frame
   double oldTime = 0; //time of previous frame
 
-  std::vector<Uint32> texture[8];
-  for(int i = 0; i < 8; i++) texture[i].resize(texWidth * texHeight);
+  std::vector<Uint32> texture[11];
+  for(int i = 0; i < 11; i++) texture[i].resize(texWidth * texHeight);
 
   screen(screenWidth,screenHeight, 0, "Raycaster");
 
@@ -75,6 +119,10 @@ int main(int argc, char *argv[])
   error |= loadImage(texture[5], tw, th, "assets/mossy.png");
   error |= loadImage(texture[6], tw, th, "assets/wood.png");
   error |= loadImage(texture[7], tw, th, "assets/colorstone.png");
+
+  error |= loadImage(texture[8], tw, th, "assets/barrel.png");
+  error |= loadImage(texture[9], tw, th, "assets/pillar.png");
+  error |= loadImage(texture[10], tw, th, "assets/greenlight.png");
   if(error) { std::cout << "error loading images" << std::endl; return 1; }
 
   //start the main loop
@@ -252,6 +300,9 @@ int main(int argc, char *argv[])
         if(side == 1) color = (color >> 1) & 8355711;
         buffer[y][x] = color;
       }
+
+      //Set the zbuffer for the sprite casting
+      ZBuffer[x] = perpWallDist; //perpendicular distance is used
     }
 
     drawBuffer(buffer[0]);
