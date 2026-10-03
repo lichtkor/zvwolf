@@ -4,13 +4,13 @@
 #include <vector>
 #include <iostream>
 
-#include "supergl.h"
-using namespace SuperGL;
+#include "tinygl.h"
+using namespace TinyGL;
 
 /*
 clang++ *.cpp -O2 -opengl32 -lglfw3 -o raycasterv5.exe
 g++ *.cpp -O2 lopengl32 -lglfw3 -o raycasterv5.exe
-or run ´ninja´
+or run cmake --build build
 */
 
 #define FLOOR_HORIZONTAL 1
@@ -91,7 +91,7 @@ Sprite sprite[numSprites] = {
   {10.5, 15.8,8},
 };
 
-Uint32 buffer[screenHeight][screenWidth];
+uint32 buffer[screenHeight][screenWidth];
 
 //1D ZBuffer
 float ZBuffer[screenWidth];
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
   double lastFrameTime = getTime();
 
-  std::vector<Uint32> texture[11];
+  std::vector<uint32> texture[11];
   for(int i = 0; i < 11; i++) texture[i].resize(texWidth * texHeight);
 
   bool fullscreen = false;
@@ -161,9 +161,9 @@ int main(int argc, char *argv[])
     const float rayDirY0 = static_cast<float>(dirY - planeY);
     const float rayDirX1 = static_cast<float>(dirX + planeX);
     const float rayDirY1 = static_cast<float>(dirY + planeY);
-    const Uint32* floorTexA = texture[3].data();
-    const Uint32* floorTexB = texture[4].data();
-    const Uint32* ceilingTex = texture[6].data();
+    const uint32* floorTexA = texture[3].data();
+    const uint32* floorTexB = texture[4].data();
+    const uint32* ceilingTex = texture[6].data();
 
     for(int y = screenHeight / 2 + 1; y < screenHeight; ++y)
     {
@@ -174,8 +174,8 @@ int main(int argc, char *argv[])
       float floorX = static_cast<float>(posX) + rowDistance * rayDirX0;
       float floorY = static_cast<float>(posY) + rowDistance * rayDirY0;
 
-      Uint32* floorRow = buffer[y];
-      Uint32* ceilingRow = buffer[screenHeight - y - 1];
+      uint32* floorRow = buffer[y];
+      uint32* ceilingRow = buffer[screenHeight - y - 1];
       for(int x = 0; x < screenWidth; ++x)
       {
         const int cellX = static_cast<int>(floorX);
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
         const int ty = static_cast<int>(texHeight * (floorY - cellY)) & (texHeight - 1);
         floorX += floorStepX;
         floorY += floorStepY;
-        const Uint32* floorTex = ((cellX + cellY) & 1) ? floorTexB : floorTexA;
+        const uint32* floorTex = ((cellX + cellY) & 1) ? floorTexB : floorTexA;
         floorRow[x] = (floorTex[texWidth * ty + tx] >> 1) & 8355711;
         ceilingRow[x] = (ceilingTex[texWidth * ty + tx] >> 1) & 8355711;
       }
@@ -283,12 +283,12 @@ int main(int argc, char *argv[])
 
       const int texStep = (texHeight << 16) / ((lineHeight > 0) ? lineHeight : 1);
       int texPos = ((drawStart - screenHeight / 2 + lineHeight / 2) * texStep);
-      const Uint32* wallTexture = texture[texNum].data();
+      const uint32* wallTexture = texture[texNum].data();
       const bool darkSide = (side != 0);
       for(int y = drawStart; y < drawEnd; ++y)
       {
         const int texY = (texPos >> 16) & (texHeight - 1);
-        Uint32 color = wallTexture[texHeight * texY + texX];
+        uint32 color = wallTexture[texHeight * texY + texX];
         if(darkSide) color = (color >> 1) & SHADE_MASK;
         buffer[y][x] = color;
         texPos += texStep;
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
       if(drawEndX >= screenWidth) drawEndX = screenWidth - 1;
       if(drawStartX >= drawEndX) continue;
 
-      const Uint32* spriteTexture = texture[spr.texture].data();
+      const uint32* spriteTexture = texture[spr.texture].data();
       for(int stripe = drawStartX; stripe < drawEndX; ++stripe)
       {
         if(transformY >= ZBuffer[stripe]) continue;
@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
           const int texY = ((d * texHeight) / spriteHeight) >> 8;
           if(texY >= 0 && texY < texHeight)
           {
-            const Uint32 color = spriteTexture[texWidth * texY + texX];
+            const uint32 color = spriteTexture[texWidth * texY + texX];
             if((color & 0x00FFFFFFu) != 0)
               buffer[y][stripe] = color;
           }
