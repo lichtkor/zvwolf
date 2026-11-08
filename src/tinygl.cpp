@@ -630,6 +630,26 @@ void createWindow(int renderWidth, int renderHeight, std::string& title, GLFWmon
         std::exit(1);
     }
 
+    int iconWidth = 0;
+    int iconHeight = 0;
+    int iconChannels = 0;
+    
+    unsigned char* iconPixels = stbi_load("resources/zvwolf.png", &iconWidth, &iconHeight, &iconChannels, 4);
+    
+    if(iconPixels)
+    {
+        GLFWimage icon{};
+        icon.width = iconWidth;
+        icon.height = iconHeight;
+        icon.pixels = iconPixels;
+        glfwSetWindowIcon(window, 1, &icon);
+        stbi_image_free(iconPixels);
+    }
+    else
+    {
+        std::cerr << "TinyGL: failed to load window icon\n";
+    }
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
 

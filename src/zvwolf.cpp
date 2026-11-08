@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 
 #include "tinygl.h"
 using namespace TinyGL;
@@ -116,8 +117,10 @@ void sortSprites(int* order, float* dist, int amount)
   }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int, char* argv[]) {
+    const std::filesystem::path executablePath = std::filesystem::absolute(argv[0]);
+    const std::filesystem::path assetDir = executablePath.parent_path() / "assets";
+    
   double posX = 22.0, posY = 11.5; //x and y start position
   double dirX = -1.0, dirY = 0.0; //initial direction vector
   double planeX = 0.0, planeY = 0.66; //the 2d raycaster version of camera plane
@@ -128,26 +131,32 @@ int main(int argc, char *argv[])
   for(int i = 0; i < 11; i++) texture[i].resize(texWidth * texHeight);
 
   bool fullscreen = false;
-  screen(WINDOW_WIDTH, WINDOW_HEIGHT, fullscreen, "Raycaster", screenWidth, screenHeight);
+  screen(WINDOW_WIDTH, WINDOW_HEIGHT, fullscreen, "Zvwolf", screenWidth, screenHeight);
 #if LOCK_MOUSE
   setMouseLocked(true);
 #endif
 
   //load some textures
   unsigned long tw, th, error = 0;
-  error |= loadImage(texture[0], tw, th, "assets/eagle.png");
-  error |= loadImage(texture[1], tw, th, "assets/redbrick.png");
-  error |= loadImage(texture[2], tw, th, "assets/purplestone.png");
-  error |= loadImage(texture[3], tw, th, "assets/greystone.png");
-  error |= loadImage(texture[4], tw, th, "assets/bluestone.png");
-  error |= loadImage(texture[5], tw, th, "assets/mossy.png");
-  error |= loadImage(texture[6], tw, th, "assets/wood.png");
-  error |= loadImage(texture[7], tw, th, "assets/colorstone.png");
-
-  error |= loadImage(texture[8], tw, th, "assets/barrel.png");
-  error |= loadImage(texture[9], tw, th, "assets/pillar.png");
-  error |= loadImage(texture[10], tw, th, "assets/greenlight.png");
-  if(error) { std::cout << "error loading images" << std::endl; return 1; }
+  auto loadTexture = [&](int index, const char* filename) {
+      const auto path = assetDir / filename;
+      const int result = loadImage(texture[index], tw, th, path.string());
+      if(result != 0) { std::cerr << "Failed to load texture: " << path.string() << '\n'; ++error; }
+  };
+  
+  loadTexture(0, "eagle.png");
+  loadTexture(1, "redbrick.png");
+  loadTexture(2, "purplestone.png");
+  loadTexture(3, "greystone.png");
+  loadTexture(4, "bluestone.png");
+  loadTexture(5, "mossy.png");
+  loadTexture(6, "wood.png");
+  loadTexture(7, "colorstone.png");
+  loadTexture(8, "barrel.png");
+  loadTexture(9, "pillar.png");
+  loadTexture(10, "greenlight.png");
+  
+  if(error != 0){ std::cerr << "Texture loading failed. " << error << " error(s).\n"; return 1; }
 
   while(!done(true, false))
   {
